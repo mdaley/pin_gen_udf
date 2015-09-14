@@ -16,13 +16,13 @@ or, on ubuntu `/usr/lib/mysql/plugin`.
 Then, run:
 
 ```
-CREATE FUNCTION pin_gen_udf RETURNS STRING SONAME "pin_gen_udf.so"
+CREATE FUNCTION pin_gen_udf RETURNS STRING SONAME "pin_gen_udf.so";
 ```
 
 to install the UDF and:
 
 ```sql
-SELECT pi_gen_udf(16)
+SELECT pin_gen_udf(16);
 ```
 
 to generate a PIN.
