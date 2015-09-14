@@ -48,6 +48,15 @@ int random_bytes(char* bytes, int length);
 
 void to_pincode_bytes(char* bytes, int length);
 
+/* The init function; returns error if param (length of PIN) is invalid.
+ *
+ * @initid - unused
+ * @args - arguments passed in (only one, the length of the PIN requested)
+ * @message - an already allocated buffer that can be filling with an error
+ *            message if necessary.
+ *
+ * returns - 0 for success and 1 for failure.
+ */
 my_bool pin_gen_udf_init(UDF_INIT *initid __attribute__((unused)),
                          UDF_ARGS *args, char *message)
 {
@@ -69,6 +78,8 @@ my_bool pin_gen_udf_init(UDF_INIT *initid __attribute__((unused)),
 
 /* The deinit function. nothing needs to happen here, e.g. no
  * memory to release.
+ *
+ * @initid - unused.
  */
 void pin_gen_udf_deinit(UDF_INIT *initid __attribute__((unused)))
 {
@@ -77,7 +88,7 @@ void pin_gen_udf_deinit(UDF_INIT *initid __attribute__((unused)))
 /* Generate and return a PIN.
  *
  * @initid - unused.
- * @args - the arguments passed in (only one, the length of PIN required).
+ * @args - the arguments passed in (only one, the length of PIN requested).
  * @result - pointer to the buffer (already allocated by mysql, size 256)
  *           where the resulting PIN needs to be stored.
  * @result_length - the size of of the generated PIN (and the size of the
@@ -85,6 +96,7 @@ void pin_gen_udf_deinit(UDF_INIT *initid __attribute__((unused)))
  * @is_null - pointer to a value that should be set to 1 if the result is NULL.
  * @error - pointer to a value that should be set to 1 if an error has occurred.
  *
+ * returns - pointer to the buffer containing the generated PIN (same as @result).
  */
 char* pin_gen_udf(UDF_INIT* initid __attribute__((unused)), UDF_ARGS* args,
                   char* result, unsigned long* result_length,
@@ -111,6 +123,8 @@ char* pin_gen_udf(UDF_INIT* initid __attribute__((unused)), UDF_ARGS* args,
  *
  * @bytes - pointer to buffer of bytes to be filled.
  * @length - the size of the buffer.
+ *
+ * returns: 0 for success and -1 for failure.
  */
 int random_bytes(char* bytes, int length) {
   int f = open("/dev/urandom", O_RDONLY);
