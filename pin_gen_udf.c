@@ -34,20 +34,22 @@
   static pthread_mutex_t LOCK_hostname;
   #endif
 
-my_bool pin_gen_udf_init(UDF_INIT *initid, UDF_ARGS *args, char *message);
+my_bool pin_gen_udf_init(UDF_INIT *initid __attribute__((unused)),
+                         UDF_ARGS *args, char *message);
 
 void pin_gen_udf_deinit(UDF_INIT *initid __attribute__((unused)));
 
-char* pin_gen_udf(UDF_INIT* initid, UDF_ARGS* args __attribute__((unused)),
+char* pin_gen_udf(UDF_INIT* initid __attribute__((unused)), UDF_ARGS* args,
                   char* result, unsigned long* length,
-                  char* is_null __attribute__((unused)), char* error __attribute__((unused)));
+                  char* is_null, char* error);
 
 
 int random_bytes(char* bytes, int length);
 
 void to_pincode_bytes(char* bytes, int length);
 
-my_bool pin_gen_udf_init(UDF_INIT *initid, UDF_ARGS *args, char *message)
+my_bool pin_gen_udf_init(UDF_INIT *initid __attribute__((unused)),
+                         UDF_ARGS *args, char *message)
 {
   int ok = TRUE;
 
@@ -65,22 +67,36 @@ my_bool pin_gen_udf_init(UDF_INIT *initid, UDF_ARGS *args, char *message)
   return 0;
 }
 
+/* The deinit function. nothing needs to happen here, e.g. no
+ * memory to release.
+ */
 void pin_gen_udf_deinit(UDF_INIT *initid __attribute__((unused)))
 {
 }
 
-char* pin_gen_udf(UDF_INIT* initid, UDF_ARGS* args __attribute__((unused)),
+/* Generate and return a PIN.
+ *
+ * @initid - unused.
+ * @args - the arguments passed in (only one, the length of PIN required).
+ * @result - pointer to the buffer (already allocated by mysql, size 256)
+ *           where the resulting PIN needs to be stored.
+ * @result_length - the size of of the generated PIN (and the size of the
+ *                  result buffer actually used.
+ * @is_null - pointer to a value that should be set to 1 if the result is NULL.
+ * @error - pointer to a value that should be set to 1 if an error has occurred.
+ *
+ */
+char* pin_gen_udf(UDF_INIT* initid __attribute__((unused)), UDF_ARGS* args,
                   char* result, unsigned long* result_length,
-                  char* is_null __attribute__((unused)),
-                  char* error __attribute__((unused)))
+                  char* is_null, char* error)
 {
   int length = *args->args[0];
   char bytes[length];
 
   if (random_bytes(bytes, length) == -1) {
-    result = "wrong bytes read";
-    *result_length = 16;
-    return;
+    *is_null = 1;
+    *error = 1;
+    return NULL;
   }
 
   to_pincode_bytes(bytes, length);
@@ -90,6 +106,12 @@ char* pin_gen_udf(UDF_INIT* initid, UDF_ARGS* args __attribute__((unused)),
   return result;
 }
 
+/* Fill a buffer with values from /dev/urandom. Of course, this only
+ * works on linux but this is OK for us.
+ *
+ * @bytes - pointer to buffer of bytes to be filled.
+ * @length - the size of the buffer.
+ */
 int random_bytes(char* bytes, int length) {
   int f = open("/dev/urandom", O_RDONLY);
 
@@ -103,8 +125,17 @@ int random_bytes(char* bytes, int length) {
   return (bytes_read == length) ? 0 : -1;
 }
 
-char* pincode_points = "01234567890ACDEFGHJKLMNPQRSTUVWXY";
+/* The allowed values of digits in a PIN */
+char* pincode_points = "0123456789BCDEFGHJKLMNPQRSTVWXYZ";
 
+/* Change the byte values in the supplied buffer from 0x00 to 0xFF
+ * to the ASCII values 0-9 A-Z excluding A, I, O and U which can
+ * be easily confused with numbers or can help to avoid the problem
+ * of rude words in PINs, e.g. F?CK, SH?T, W?NK; you get the idea.
+ *
+ * @bytes - pointer to the buffer of bytes to be modified.
+ * @length - length of the buffer.
+ */
 void to_pincode_bytes(char* bytes, int length) {
   int i = 0;
   for (i = 0; i < length; i++) {
