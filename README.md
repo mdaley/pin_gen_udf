@@ -26,3 +26,5 @@ SELECT pin_gen_udf(16);
 ```
 
 to generate a PIN.
+
+Note that for live use, I've given the shared library file to the DBAs who's put it into their puppet scripts for maaging database servers. There's no versioning of packaging as I haven't worked out how to do it but this approach is adequate for the moment.
