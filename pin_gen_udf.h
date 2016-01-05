@@ -46,10 +46,9 @@ char* pin_gen_udf(UDF_INIT* initid __attribute__((unused)), UDF_ARGS* args,
                   char* result, unsigned long* length,
                   char* is_null, char* error);
 
-
+int validate_allowed_chars(char* chars, unsigned long long length);
 int random_bytes(char* bytes, int length);
-
-void to_pincode_bytes(char* bytes, int length);
+int random_uints(unsigned int* ints, int length);
 
 #endif /* HAVE_DLOPEN */
 

@@ -3,7 +3,7 @@
 /* The init function; returns error if param (length of PIN) is invalid.
  *
  * @initid - unused
- * @args - arguments passed in (only one, the length of the PIN requested)
+ * @args - arguments passed in (two: the length of the PIN requested and the chanracters allowed)
  * @message - an already allocated buffer that can be filling with an error
  *            message if necessary.
  *
@@ -14,17 +14,33 @@ my_bool pin_gen_udf_init(UDF_INIT *initid __attribute__((unused)),
 {
   int ok = TRUE;
 
-  if(!(args->arg_count == 1)) {
+  if (!(args->arg_count == 2)) {
     ok = FALSE;
-  } else if (args->arg_type[0] != INT_RESULT || *args->args[0] < 4 || *args->args[0] > 24) {
+  } else if (args->arg_type[0] != INT_RESULT || *args->args[0] < 4 || *args->args[0] > 24
+             || args->arg_type[1] != STRING_RESULT || args->lengths[1] < 10 || args->lengths[1] > 62) {
+    ok = FALSE;
+  } else if (validate_allowed_chars(args->args[1], args->lengths[1]) != 0) {
     ok = FALSE;
   }
 
   if (ok == FALSE) {
-    strcpy(message, "expected one argument 'length', integer, from 4 to 24 inclusive.");
+    strcpy(message, "args: length (4 to 24) followed by string of allowed chars (A-Za-z0-9).");
     return 1;
   }
 
+  return 0;
+}
+
+int validate_allowed_chars(char* chars, unsigned long long length) {
+
+  unsigned long long i;
+  for (i = 0; i < length; i++) {
+    char v = chars[i];
+    if (!((v >= 'A' && v <= 'Z') ||
+          (v >= '0' && v <= '9') ||
+          (v >= 'a' && v <= 'z')))
+      return -1;
+  }
   return 0;
 }
 
@@ -40,11 +56,11 @@ void pin_gen_udf_deinit(UDF_INIT *initid __attribute__((unused)))
 /* Generate and return a PIN.
  *
  * @initid - unused.
- * @args - the arguments passed in (only one, the length of PIN requested).
+ * @args - the arguments passed in (the length of PIN requested and the chars allowed).
  * @result - pointer to the buffer (already allocated by mysql, size 256)
  *           where the resulting PIN needs to be stored.
  * @result_length - the size of of the generated PIN (and the size of the
- *                  result buffer actually used.
+ *                  result buffer actually used).
  * @is_null - pointer to a value that should be set to 1 if the result is NULL.
  * @error - pointer to a value that should be set to 1 if an error has occurred.
  *
@@ -55,16 +71,24 @@ char* pin_gen_udf(UDF_INIT* initid __attribute__((unused)), UDF_ARGS* args,
                   char* is_null, char* error)
 {
   int length = *args->args[0];
-  char bytes[length];
+  unsigned int uints[length];
+  char* allowed = args->args[1];
+  unsigned long long allowed_size = args->lengths[1];
 
-  if (random_bytes(bytes, length) == -1) {
+  if (random_uints(uints, length) == -1) {
     *is_null = 1;
     *error = 1;
     return NULL;
   }
 
-  to_pincode_bytes(bytes, length);
-  strncpy(result, bytes, length);
+  int i;
+  for (i = 0; i < length; i++) {
+    uints[i] = uints[i] % allowed_size;
+  }
+
+  for (i = 0; i < length; i++) {
+    result[i] = allowed[uints[i]];
+  }
 
   *result_length = length;
   return result;
@@ -91,20 +115,13 @@ int random_bytes(char* bytes, int length) {
   return (bytes_read == length) ? 0 : -1;
 }
 
-/* The allowed values of digits in a PIN */
-char* pincode_points = "0123456789BCDEFGHJKLMNPQRSTVWXYZ";
-
-/* Change the byte values in the supplied buffer from 0x00 to 0xFF
- * to the ASCII values 0-9 A-Z excluding A, I, O and U which can
- * be easily confused with numbers or can help to avoid the problem
- * of rude words in PINs, e.g. F?CK, SH?T, W?NK; you get the idea.
+/* Fill a buffer with random unsigned ints
  *
- * @bytes - pointer to the buffer of bytes to be modified.
- * @length - length of the buffer.
+ * @ints - pointer to buffer of unsigned ints to be filled.
+ * @length - the size of the buffer.
+ *
+ * return: 0 for success and -1 for failure.
  */
-void to_pincode_bytes(char* bytes, int length) {
-  int i = 0;
-  for (i = 0; i < length; i++) {
-    *(bytes + i) = *(pincode_points + (*(bytes + i) & 31));
-  }
+int random_uints(unsigned int* ints, int length) {
+  return random_bytes((char*) ints, length * (sizeof(unsigned int)));
 }
