@@ -62,7 +62,7 @@ static char* init_returns_error_when_no_parameters_supplied() {
 
   my_bool result = pin_gen_udf_init(NULL, &udf_args, (char*)&message);
 
-  if (result == 1 && strstr(message, "expected two arguments"))
+  if (result == 1 && strstr(message, "args: length"))
     return NULL;
   else
     return "expected error code and message not returned.";
