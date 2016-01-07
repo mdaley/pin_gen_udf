@@ -12,9 +12,12 @@ Anyway, after compilation you should have a `pin_gen_udf.so` shared library. Cop
 of mysql, e.g. on OSX `/usr/local/mysql/lib/plugin` (I installed using the DMG from Oracle, instead of using brew)
 or, on ubuntu `/usr/lib/mysql/plugin`.
 
+(Note there is primitive versioning: store a release by copying to the `library` directories and giving the released
+library a version number. Look at the files already stored to understand the approach.)
+
 Then, run:
 
-```
+```sql
 CREATE FUNCTION pin_gen_udf RETURNS STRING SONAME "pin_gen_udf.so";
 ```
 

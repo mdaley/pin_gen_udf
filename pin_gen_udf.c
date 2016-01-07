@@ -1,9 +1,9 @@
 #include "pin_gen_udf.h"
 
-/* The init function; returns error if param (length of PIN) is invalid.
+/* The init function; returns non-zero if parameters are invalid.
  *
- * @initid - unused
- * @args - arguments passed in (two: the length of the PIN requested and the chanracters allowed)
+ * @initid - unused.
+ * @args - arguments passed in (two: the length of the PIN requested and the chanracters allowed).
  * @message - an already allocated buffer that can be filling with an error
  *            message if necessary.
  *
