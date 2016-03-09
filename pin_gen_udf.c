@@ -123,5 +123,15 @@ int random_bytes(char* bytes, int length) {
  * return: 0 for success and -1 for failure.
  */
 int random_uints(unsigned int* ints, int length) {
+#ifdef __WIN__
+  for (i = 0; i < length; i++) {
+    int e = rand_s(ints->i);
+    if (e != 0)
+      return -1;
+  }
+
+  return 0;
+#else
   return random_bytes((char*) ints, length * (sizeof(unsigned int)));
+#endif
 }
