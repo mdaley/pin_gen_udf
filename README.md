@@ -33,3 +33,7 @@ For production use, you should arrange some sort of mechanism for getting the sh
 in a repeatable, reliable way. One suggestion would be to have it incorporated into puppet scripts that build out your servers.
 
 There's no versioning or packaging as I haven't worked out how to do it. Suggestions anyone?
+
+## Issues
+
+Doesn't work on Microsoft Windows (although it works on Mac OSX and linux).
