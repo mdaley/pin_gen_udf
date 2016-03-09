@@ -1,2 +1,4 @@
 gcc $(mysql_config --cflags) -fPIC unit_test.c pin_gen_udf.c -o unit_test
-./unit_test
+if [ $? -eq 0 ]; then
+  ./unit_test
+fi

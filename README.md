@@ -29,4 +29,7 @@ SELECT pin_gen_udf(16, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789');
 
 to generate a PIN.
 
-Note that for live use, I've given the shared library file to the DBAs who've put it into their puppet scripts for managing database servers. There's no versioning or packaging as I haven't worked out how to do it, but this approach is adequate for the moment.
+For production use, you should arrange some sort of mechanism for getting the shared library onto your production database servers
+in a repeatable, reliable way. One suggestion would be to have it incorporated into puppet scripts that build out your servers.
+
+There's no versioning or packaging as I haven't worked out how to do it. Suggestions anyone?
